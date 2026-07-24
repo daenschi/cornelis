@@ -177,7 +177,7 @@ cornelisInit = do
     neovimAsync $ do
       forever $ reportExceptions $ do
         AgdaResp buffer next <- liftIO $ readChan outchan
-        void $ neovimAsync $ reportExceptions $ respond buffer next
+        void $ reportExceptions $ respond buffer next
   pure env
 
 
