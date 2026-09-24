@@ -152,7 +152,7 @@ writeInfoBuffer ns iw doc = do
 
   let b = iw_buffer iw
   nvim_buf_set_option b "modifiable" $ ObjectBool True
-  buffer_set_lines b 0 (-1) True $ toObject <$> V.fromList s
+  buffer_set_lines b 0 (-1) True $ V.fromList s
 
   for_ (concatMap spanInfoHighlights hls) $ \(InfoHighlight (l, sc) ec hg) ->
     nvim_buf_add_highlight
@@ -160,4 +160,3 @@ writeInfoBuffer ns iw doc = do
       (T.pack $ show hg)
       l sc ec
   nvim_buf_set_option b "modifiable" $ ObjectBool False
-
