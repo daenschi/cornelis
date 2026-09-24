@@ -1,6 +1,7 @@
 module Cornelis.Vim.Compat where
 
 import Data.Int (Int64)
+import Data.Map (Map)
 import Data.Text (Text)
 import Data.Vector (Vector)
 import qualified Data.Vector as Vector
@@ -34,3 +35,19 @@ nvim_buf_get_lines' = Vim.nvim_buf_get_lines
 nvim_buf_set_text ::
     Buffer -> Int64 -> Int64 -> Int64 -> Int64 -> [Text] -> Neovim env ()
 nvim_buf_set_text b sl sc el ec = Vim.nvim_buf_set_text b sl sc el ec . Vector.fromList
+
+-- Neovim 0.12 declares nvim_buf_get_extmarks as returning
+-- ArrayOf(DictAs(get_extmark_item)), which nvim-hs maps to
+-- Vector (Map Text Object). On the wire the items are still
+-- [extmark_id, row, col, details?] TUPLES, so the typed binding would fail
+-- to decode at runtime. Call it through nvim_call_function instead and keep
+-- the raw Objects (same trick as Cornelis.Vim.getExtmarkIntervalById).
+nvim_buf_get_extmarks ::
+    Buffer -> Int64 -> Object -> Object -> Map Text Object -> Neovim env (Vector Object)
+nvim_buf_get_extmarks b nsid s e opts = do
+    res <-
+        Vim.nvim_call_function "nvim_buf_get_extmarks" $
+            Vector.fromList [toObject b, toObject nsid, s, e, ObjectMap opts]
+    case res of
+        ObjectArray v -> pure v
+        _ -> pure Vector.empty
