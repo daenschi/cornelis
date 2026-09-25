@@ -224,7 +224,7 @@ getExtmarks b p = do
                 , ObjectInt i
                 ]
     res <- Compat.nvim_buf_get_extmarks b ns (pos 0) (pos (-1)) $ M.singleton "details" $ ObjectBool True
-    marks <- fmap catMaybes $ traverse (parseExtmark b) $ V.toList res
+    marks <- fmap catMaybes $ traverse (parseExtmark b) res
 
     pure $
         marks >>= \es ->
