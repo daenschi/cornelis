@@ -1,8 +1,12 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Cornelis.Vim.Compat where
 
 import Data.Int (Int64)
 import Data.Map (Map)
+import qualified Data.Map as Map
 import Data.Text (Text)
+import Data.Text.Encoding (encodeUtf8)
 import Data.Vector (Vector)
 import qualified Data.Vector as Vector
 import Neovim
@@ -42,12 +46,20 @@ nvim_buf_set_text b sl sc el ec = Vim.nvim_buf_set_text b sl sc el ec . Vector.f
 -- [extmark_id, row, col, details?] TUPLES, so the typed binding would fail
 -- to decode at runtime. Call it through nvim_call_function instead and keep
 -- the raw Objects (same trick as Cornelis.Vim.getExtmarkIntervalById).
+-- Note: nvim-hs' Object type uses [Object] for ObjectArray and
+-- Map Object Object with ByteString keys for ObjectMap.
 nvim_buf_get_extmarks ::
-    Buffer -> Int64 -> Object -> Object -> Map Text Object -> Neovim env (Vector Object)
+    Buffer -> Int64 -> Object -> Object -> Map Text Object -> Neovim env [Object]
 nvim_buf_get_extmarks b nsid s e opts = do
     res <-
         Vim.nvim_call_function "nvim_buf_get_extmarks" $
-            Vector.fromList [toObject b, toObject nsid, s, e, ObjectMap opts]
+            Vector.fromList
+                [ toObject b
+                , toObject nsid
+                , s
+                , e
+                , ObjectMap (Map.mapKeys (ObjectString . encodeUtf8) opts)
+                ]
     case res of
         ObjectArray v -> pure v
-        _ -> pure Vector.empty
+        _ -> pure []
